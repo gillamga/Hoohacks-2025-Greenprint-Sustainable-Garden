@@ -18,7 +18,7 @@ export default function Home() {
         <Card>
           <CardHeader>
             <Leaf className="h-8 w-8 text-primary mb-2" />
-            <CardTitle>Design Your Garden</CardTitle>
+            <CardTitle>Design New Garden</CardTitle>
             <CardDescription>Create a custom garden plan based on your space and needs</CardDescription>
           </CardHeader>
           <CardContent>
@@ -28,7 +28,7 @@ export default function Home() {
             </p>
           </CardContent>
           <CardFooter>
-            <Link href="/plot-designer" className="w-full">
+            <Link href="/garden/new" className="w-full">
               <Button className="w-full">
                 <Grid3X3 className="mr-2 h-4 w-4" />
                 Start Designing

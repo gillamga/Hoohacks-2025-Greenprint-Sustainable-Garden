@@ -21,11 +21,18 @@ export default function PlotDesigner() {
   const [currentStep, setCurrentStep] = useState(-1)
   const [canvasSize, setCanvasSize] = useState({ width: 600, height: 400 })
   const [soilType, setSoilType] = useState("loam")
+  const [unit, setUnit] = useState("feet")
+  const [shadeType, setShadeType] = useState("partial")
 
   // Colors for different drawing modes
   const colors = {
     plot: "#8B4513", // Brown for plot
-    shade: "#A9A9A9", // Dark gray for shade
+    shade: {
+      full: "#4B4B4B", // Dark gray for full shade
+      partial: "#A9A9A9", // Medium gray for partial shade
+      "partial-sun": "#D3D3D3", // Light gray for partial sun
+      "full-sun": "#FFFFE0", // Light yellow for full sun
+    },
     soil: {
       clay: "#D2691E", // Clay soil
       loam: "#8B4513", // Loam soil
@@ -124,6 +131,8 @@ export default function PlotDesigner() {
     // Set color based on drawing mode
     if (drawingMode === "soil") {
       ctx.fillStyle = colors.soil[soilType as keyof typeof colors.soil]
+    } else if (drawingMode === "shade") {
+      ctx.fillStyle = colors.shade[shadeType as keyof typeof colors.shade]
     } else if (drawingMode === "eraser") {
       ctx.fillStyle = colors.eraser
     } else {
@@ -332,6 +341,19 @@ export default function PlotDesigner() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label>Unit of Measurement</Label>
+                <Select value={unit} onValueChange={setUnit}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="feet">Feet</SelectItem>
+                    <SelectItem value="inches">Inches</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Tabs defaultValue="plot" onValueChange={(value) => setDrawingMode(value)}>
                 <TabsList className="grid grid-cols-4 w-full">
                   <TabsTrigger value="plot">Plot</TabsTrigger>
@@ -348,10 +370,39 @@ export default function PlotDesigner() {
                   </div>
                 </TabsContent>
                 <TabsContent value="shade">
-                  <div className="p-4 border rounded-md mt-2">
+                  <div className="p-4 border rounded-md mt-2 space-y-4">
                     <div className="flex items-center gap-2">
                       <Sun className="h-4 w-4 text-yellow-500" />
-                      <span>Mark shaded areas in your garden</span>
+                      <span>Mark light conditions in your garden</span>
+                    </div>
+                    <Select value={shadeType} onValueChange={setShadeType}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select light condition" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="full">Full Shade</SelectItem>
+                        <SelectItem value="partial">Partial Shade</SelectItem>
+                        <SelectItem value="partial-sun">Partial Sun</SelectItem>
+                        <SelectItem value="full-sun">Full Sun</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="grid grid-cols-4 gap-2 text-xs">
+                      <div className="flex flex-col items-center">
+                        <div className="w-6 h-6 bg-[#4B4B4B] mb-1"></div>
+                        <span>Full Shade</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="w-6 h-6 bg-[#A9A9A9] mb-1"></div>
+                        <span>Partial Shade</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="w-6 h-6 bg-[#D3D3D3] mb-1"></div>
+                        <span>Partial Sun</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="w-6 h-6 bg-[#FFFFE0] mb-1"></div>
+                        <span>Full Sun</span>
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
