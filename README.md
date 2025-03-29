@@ -15,3 +15,8 @@ Commercial agriculture is often cited as one fo the industries with the highest 
 ## Running the Application Locally
 run ```npm i```
 run ```npm run dev``` to start the application
+
+
+
+## Other Sources (also in sources.txt)
+https://rapidapi.com/fireside-worldwide-fireside-worldwide-default/api/plant-hardiness-zone - hardiness zone based on zipcode api
