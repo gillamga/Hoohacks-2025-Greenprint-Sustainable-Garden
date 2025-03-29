@@ -34,30 +34,54 @@ export default function LocationQuestion({ data, updateData }: LocationQuestionP
     setError(null)
 
     try {
-      // In a real app, this would call your API
-      // For now, we'll simulate an API call with mock data
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Call the Plant Hardiness Zone API to get the growing zone
+      const response = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
 
-      // Mock growing zone data based on zipcode
-      // In a real app, this would come from your USDA API
-      const mockZones: Record<string, string> = {
-        "90210": "10a",
-        "10001": "7b",
-        "60601": "6a",
-        "98101": "8b",
-        "33101": "10b",
+        xhr.addEventListener('readystatechange', function () {
+          if (this.readyState === this.DONE) {
+            if (this.status === 200) {
+              resolve(this.responseText);
+            } else {
+              reject(new Error(`API request failed with status ${this.status}`));
+            }
+          }
+        });
+
+        xhr.open('GET', `https://plant-hardiness-zone.p.rapidapi.com/zipcodes/${zipcode}`);
+        
+        // Use environment variables for API credentials
+        const apiKey = process.env.NEXT_PUBLIC_RAPIDAPI_KEY || '';
+        const apiHost = process.env.NEXT_PUBLIC_RAPIDAPI_HOST || 'plant-hardiness-zone.p.rapidapi.com';
+        
+        if (!apiKey) {
+          console.error('API key not found. Please set NEXT_PUBLIC_RAPIDAPI_KEY in your .env.local file');
+          reject(new Error('API key not configured'));
+          return;
+        }
+        
+        xhr.setRequestHeader('x-rapidapi-key', apiKey);
+        xhr.setRequestHeader('x-rapidapi-host', apiHost);
+
+        xhr.send(null);
+      });
+
+      // Parse the response to get the zone information
+      const responseData = JSON.parse(response);
+      
+      if (responseData && responseData.hardiness_zone) {
+        setGrowingZone(responseData.hardiness_zone);
+        setSuccess(true);
+        return true;
+      } else {
+        throw new Error("Could not determine growing zone from API response");
       }
-
-      const zone = mockZones[zipcode] || `${Math.floor(Math.random() * 9) + 1}${Math.random() > 0.5 ? "a" : "b"}`
-
-      setGrowingZone(zone)
-      setSuccess(true)
-      return true
     } catch (err) {
-      setError("Failed to fetch growing zone. Please try again.")
-      return false
+      console.error("API Error:", err);
+      setError("Failed to fetch growing zone. Please try again.");
+      return false;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -132,4 +156,3 @@ export default function LocationQuestion({ data, updateData }: LocationQuestionP
     </div>
   )
 }
-
