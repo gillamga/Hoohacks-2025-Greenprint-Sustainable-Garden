@@ -18,25 +18,37 @@ export default function SoilTypeQuestion({ data, updateData }: SoilTypeQuestionP
       id: "clay",
       name: "Clay Soil",
       description: "Sticky when wet, hard when dry. Holds nutrients well but drains poorly.",
-      image: "/placeholder.svg?height=150&width=150",
+      image: "/img/clay.jpg",
     },
     {
       id: "loam",
       name: "Loam Soil",
       description: "Perfect balance of sand, silt, and clay. Ideal for most plants.",
-      image: "/placeholder.svg?height=150&width=150",
+      image: "/img/loam.jpg",
     },
     {
       id: "sandy",
       name: "Sandy Soil",
       description: "Gritty texture, drains quickly but doesn't hold nutrients well.",
-      image: "/placeholder.svg?height=150&width=150",
+      image: "/img/sand.jpeg",
     },
     {
       id: "silt",
       name: "Silt Soil",
       description: "Smooth and slippery when wet, holds moisture and nutrients well.",
-      image: "/placeholder.svg?height=150&width=150",
+      image: "/img/silt.jpg",
+    },
+    {
+      id: "peat",
+      name: "Peat Soil",
+      description: "Made up of partially degraded plant matter, rich in nutrients and soaks up water.",
+      image: "/img/peat.jpg",
+    },
+    {
+      id: "chalky",
+      name: "Chalky Soil",
+      description: "Rocky, free-draining soil with little nutrients.",
+      image: "/img/chalk.jpg",
     },
   ]
 
@@ -87,13 +99,38 @@ export default function SoilTypeQuestion({ data, updateData }: SoilTypeQuestionP
                   {soil.name}
                 </Label>
                 <div className="flex flex-col sm:flex-row gap-3 items-center">
-                  <Image
-                    src={soil.image || "/placeholder.svg"}
-                    alt={soil.name}
-                    width={100}
-                    height={100}
-                    className="rounded-md border"
-                  />
+                  <div className="w-[200px] h-[200px] relative">
+                    {soil.id === 'sandy' && (
+                      <Image
+                        src="/img/sand.jpeg"
+                        alt={soil.name}
+                        width={150}
+                        height={150}
+                        style={{ objectFit: 'cover' }}
+                        className="rounded-md border"
+                      />
+                    )}
+                    {soil.id === 'chalky' && (
+                      <Image
+                        src="/img/chalk.jpg"
+                        alt={soil.name}
+                        width={150}
+                        height={150}
+                        style={{ objectFit: 'cover' }}
+                        className="rounded-md border"
+                      />
+                    )}
+                    {soil.id !== 'sandy' && soil.id !== 'chalky' && (
+                      <Image
+                        src={`/img/${soil.id}.jpg`}
+                        alt={soil.name}
+                        width={150}
+                        height={150}
+                        style={{ objectFit: 'fill' }}
+                        className="rounded-md border"
+                      />
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground">{soil.description}</p>
                 </div>
               </div>
