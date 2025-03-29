@@ -10,19 +10,21 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Save, Trash2, Undo, Download, Grid, Sun, CloudRain } from "lucide-react"
+import { Save, Trash2, Undo, Download, Grid, Sun, CloudRain, AlertCircle, CheckCircle2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function PlotDesigner() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [gridSize, setGridSize] = useState(20) // Size of each grid cell in pixels
+  const gridSize = 20 // Size of each grid cell in pixels (constant)
   const [plotName, setPlotName] = useState("My Garden Plot")
   const [drawingMode, setDrawingMode] = useState("plot") // plot, shade, soil
   const [plotHistory, setPlotHistory] = useState<ImageData[]>([])
   const [currentStep, setCurrentStep] = useState(-1)
-  const [canvasSize, setCanvasSize] = useState({ width: 600, height: 400 })
+  const [canvasSize, setCanvasSize] = useState({ width: 30, height: 20 }) // Number of squares in width and height
   const [soilType, setSoilType] = useState("loam")
   const [unit, setUnit] = useState("feet")
   const [shadeType, setShadeType] = useState("partial")
+  const { toast } = useToast()
 
   // Colors for different drawing modes
   const colors = {
@@ -50,9 +52,9 @@ export default function PlotDesigner() {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    // Set canvas size
-    canvas.width = canvasSize.width
-    canvas.height = canvasSize.height
+    // Set canvas size (convert from number of squares to pixels)
+    canvas.width = canvasSize.width * gridSize
+    canvas.height = canvasSize.height * gridSize
 
     // Fill with white background
     ctx.fillStyle = "#FFFFFF"
@@ -72,19 +74,22 @@ export default function PlotDesigner() {
     ctx.strokeStyle = "#DDDDDD"
     ctx.lineWidth = 0.5
 
+    const pixelWidth = canvasSize.width * gridSize
+    const pixelHeight = canvasSize.height * gridSize
+
     // Draw vertical lines
-    for (let x = 0; x <= canvasSize.width; x += gridSize) {
+    for (let x = 0; x <= pixelWidth; x += gridSize) {
       ctx.beginPath()
       ctx.moveTo(x, 0)
-      ctx.lineTo(x, canvasSize.height)
+      ctx.lineTo(x, pixelHeight)
       ctx.stroke()
     }
 
     // Draw horizontal lines
-    for (let y = 0; y <= canvasSize.height; y += gridSize) {
+    for (let y = 0; y <= pixelHeight; y += gridSize) {
       ctx.beginPath()
       ctx.moveTo(0, y)
-      ctx.lineTo(canvasSize.width, y)
+      ctx.lineTo(pixelWidth, y)
       ctx.stroke()
     }
   }
@@ -135,8 +140,8 @@ export default function PlotDesigner() {
       ctx.fillStyle = colors.shade[shadeType as keyof typeof colors.shade]
     } else if (drawingMode === "eraser") {
       ctx.fillStyle = colors.eraser
-    } else {
-      ctx.fillStyle = colors[drawingMode as keyof typeof colors]
+    } else if (drawingMode === "plot") {
+      ctx.fillStyle = colors.plot
     }
 
     // Draw a grid cell
@@ -179,10 +184,79 @@ export default function PlotDesigner() {
     setCurrentStep(0)
   }
 
+  // Check if plot is valid (each edge has at least one filled square)
+  const isPlotValid = (): boolean => {
+    const canvas = canvasRef.current
+    if (!canvas) return false
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return false
+
+    const pixelWidth = canvasSize.width * gridSize
+    const pixelHeight = canvasSize.height * gridSize
+    const imageData = ctx.getImageData(0, 0, pixelWidth, pixelHeight)
+    const data = imageData.data
+    
+    // Check if a pixel is filled (not white)
+    const isPixelFilled = (x: number, y: number): boolean => {
+      const index = (y * pixelWidth + x) * 4
+      // Check if not white (RGB values all 255)
+      return !(data[index] === 255 && data[index + 1] === 255 && data[index + 2] === 255)
+    }
+    
+    // Check top edge
+    let topEdgeHasFilled = false
+    for (let x = 0; x < pixelWidth; x += gridSize) {
+      if (isPixelFilled(x + gridSize/2, gridSize/2)) {
+        topEdgeHasFilled = true
+        break
+      }
+    }
+    
+    // Check bottom edge
+    let bottomEdgeHasFilled = false
+    for (let x = 0; x < pixelWidth; x += gridSize) {
+      if (isPixelFilled(x + gridSize/2, pixelHeight - gridSize/2)) {
+        bottomEdgeHasFilled = true
+        break
+      }
+    }
+    
+    // Check left edge
+    let leftEdgeHasFilled = false
+    for (let y = 0; y < pixelHeight; y += gridSize) {
+      if (isPixelFilled(gridSize/2, y + gridSize/2)) {
+        leftEdgeHasFilled = true
+        break
+      }
+    }
+    
+    // Check right edge
+    let rightEdgeHasFilled = false
+    for (let y = 0; y < pixelHeight; y += gridSize) {
+      if (isPixelFilled(pixelWidth - gridSize/2, y + gridSize/2)) {
+        rightEdgeHasFilled = true
+        break
+      }
+    }
+    
+    return topEdgeHasFilled && bottomEdgeHasFilled && leftEdgeHasFilled && rightEdgeHasFilled
+  }
+
   // Save plot data
   const savePlotData = async () => {
     const canvas = canvasRef.current
     if (!canvas) return
+    
+    // Validate plot before saving
+    if (!isPlotValid()) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Plot",
+        description: "Please ensure each edge of your plot has at least one filled square."
+      })
+      return
+    }
 
     // Get plot data as base64 image
     const plotImage = canvas.toDataURL("image/png")
@@ -203,10 +277,17 @@ export default function PlotDesigner() {
 
     try {
       localStorage.setItem(`garden-plot-${Date.now()}`, JSON.stringify(plotData))
-      alert("Plot saved successfully!")
+      toast({
+        title: "Plot Saved",
+        description: "Your garden plot has been saved successfully."
+      })
     } catch (error) {
       console.error("Error saving plot:", error)
-      alert("Failed to save plot. Please try again.")
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: "Failed to save your plot. Please try again."
+      })
     }
 
     // In a real implementation, you would do something like:
@@ -297,29 +378,29 @@ export default function PlotDesigner() {
               </div>
 
               <div className="space-y-2">
-                <Label>Canvas Size</Label>
+                <Label>Canvas Size (in squares)</Label>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Width: {canvasSize.width}px</span>
+                      <span>Width: {canvasSize.width} squares</span>
                     </div>
                     <Slider
                       value={[canvasSize.width]}
-                      min={300}
-                      max={1200}
-                      step={50}
+                      min={10}
+                      max={60}
+                      step={5}
                       onValueChange={(value) => handleCanvasSizeChange("width", value)}
                     />
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Height: {canvasSize.height}px</span>
+                      <span>Height: {canvasSize.height} squares</span>
                     </div>
                     <Slider
                       value={[canvasSize.height]}
-                      min={200}
-                      max={800}
-                      step={50}
+                      min={10}
+                      max={40}
+                      step={5}
                       onValueChange={(value) => handleCanvasSizeChange("height", value)}
                     />
                   </div>
@@ -330,15 +411,8 @@ export default function PlotDesigner() {
                 <Label>Grid Size</Label>
                 <div className="flex items-center gap-2">
                   <Grid className="h-4 w-4" />
-                  <span>{gridSize}px</span>
+                  <span>{gridSize}px (fixed)</span>
                 </div>
-                <Slider
-                  value={[gridSize]}
-                  min={10}
-                  max={50}
-                  step={5}
-                  onValueChange={(value) => setGridSize(value[0])}
-                />
               </div>
 
               <div className="space-y-2">
@@ -441,4 +515,3 @@ export default function PlotDesigner() {
     </div>
   )
 }
-

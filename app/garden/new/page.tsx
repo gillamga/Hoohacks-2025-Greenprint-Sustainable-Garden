@@ -15,10 +15,42 @@ import PlantPreferencesQuestion from "./components/plant-preferences-question"
 export default function NewGardenQuestionnaire() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
-  const totalSteps = 7
+  const totalSteps = 6
+
+  // Define types for garden data
+  type GardenData = {
+    location: {
+      zipcode: string;
+      growingZone: string;
+    };
+    soilTypes: string[];
+    growingHistory: {
+      hasHistory: string;
+      plants: string[];
+      yearsAgo: number;
+    };
+    construction: {
+      isConstructed: boolean;
+      hasTrellis: boolean;
+      hasFence: boolean;
+      hasRaisedBed: boolean;
+      hasIrrigation: boolean;
+      hasWeedScreen: boolean;
+    };
+    plotDetails: {
+      unit: string;
+      width: number;
+      height: number;
+    };
+    gardenTypes: string[];
+    plantPreferences: {
+      wanted: string[];
+      unwanted: string[];
+    };
+  }
 
   // State to store all answers
-  const [gardenData, setGardenData] = useState({
+  const [gardenData, setGardenData] = useState<GardenData>({
     location: {
       zipcode: "",
       growingZone: "",
@@ -50,19 +82,11 @@ export default function NewGardenQuestionnaire() {
   })
 
   // Update garden data based on step
-  const updateGardenData = (stepData: any) => {
-    // Only update if the data has actually changed
-    setGardenData((prev) => {
-      // Create a shallow copy of the previous state
-      const newState = { ...prev }
-
-      // Update only the specific properties that changed
-      Object.keys(stepData).forEach((key) => {
-        newState[key] = stepData[key]
-      })
-
-      return newState
-    })
+  const updateGardenData = (stepData: Partial<GardenData>) => {
+    setGardenData(prev => ({
+      ...prev,
+      ...stepData
+    }))
   }
 
   // Handle next step
@@ -123,21 +147,13 @@ export default function NewGardenQuestionnaire() {
           )}
 
           {currentStep === 5 && (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-bold mb-4">Plot Design</h2>
-              <p className="mb-4">Now let's design your garden plot layout.</p>
-              <Button onClick={handleNext}>Continue to Plot Designer</Button>
-            </div>
-          )}
-
-          {currentStep === 6 && (
             <GardenTypeQuestion
               data={gardenData.gardenTypes}
               updateData={(data) => updateGardenData({ gardenTypes: data })}
             />
           )}
 
-          {currentStep === 7 && (
+          {currentStep === 6 && (
             <PlantPreferencesQuestion
               data={gardenData.plantPreferences}
               gardenTypes={gardenData.gardenTypes}
@@ -161,4 +177,3 @@ export default function NewGardenQuestionnaire() {
     </div>
   )
 }
-
