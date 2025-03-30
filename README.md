@@ -1,4 +1,5 @@
 # Hoohacks-2025-Sustainable-Garden
+Weather was too nice (77 like come on!), we quit and touched grass 
 ## Application Link
 
 ## Mission Statement
